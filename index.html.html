@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pequeñas Estrellas – Kit Colibrí</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --amarillo:#FFD93D; --naranja:#FF6B35; --rosa:#FF6B9D;
+  --morado:#A855F7;   --azul:#3B82F6;   --verde:#22C55E;
+  --bg:#FFF8F0; --card:#ffffff; --text:#1a1a2e; --muted:#6b7280;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#FFD93D 0%,#FF6B35 40%,#FF6B9D 80%,#A855F7 100%);
+  padding:2rem 1.5rem 2.5rem;text-align:center;position:relative;overflow:hidden}
+header::before{content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='20' fill='%23ffffff' fill-opacity='0.06'/%3E%3C/svg%3E")}
+header .er{font-size:2rem;margin-bottom:.4rem;position:relative}
+header h1{font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,5vw,3rem);color:#fff;
+  text-shadow:3px 3px 0 rgba(0,0,0,.15);position:relative}
+header p{color:rgba(255,255,255,.9);font-size:.95rem;font-weight:700;margin-top:.3rem;position:relative}
+
+/* ROLE SCREEN */
+#role-screen{display:flex;flex-direction:column;align-items:center;padding:3rem 1.5rem;gap:1.5rem;animation:fadeIn .4s ease}
+#role-screen h2{font-family:'Fredoka One',cursive;font-size:1.6rem;text-align:center}
+#role-screen>p{color:var(--muted);font-weight:600;font-size:.95rem;text-align:center}
+.role-cards{display:flex;gap:1.2rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:600px}
+.role-card{flex:1;min-width:200px;background:#fff;border-radius:20px;padding:2.2rem 1.5rem;
+  text-align:center;cursor:pointer;border:3px solid #e5e7eb;transition:all .25s;
+  box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.role-card:hover{transform:translateY(-6px);box-shadow:0 12px 28px rgba(0,0,0,.13)}
+.role-card.admin:hover,.role-card.admin.selected{border-color:var(--azul);background:#eff6ff}
+.role-card.padre:hover,.role-card.padre.selected{border-color:var(--rosa);background:#fff0f6}
+.role-card .ico{font-size:3rem;margin-bottom:.7rem}
+.role-card h3{font-family:'Fredoka One',cursive;font-size:1.3rem;margin-bottom:.3rem}
+.role-card p{font-size:.83rem;color:var(--muted);font-weight:600}
+.role-card.admin h3{color:var(--azul)} .role-card.padre h3{color:var(--rosa)}
+.btn-enter{padding:.75rem 2.2rem;border:none;border-radius:50px;font-family:'Nunito',sans-serif;
+  font-size:1.05rem;font-weight:900;cursor:pointer;transition:all .2s;opacity:0;pointer-events:none;
+  background:linear-gradient(135deg,var(--naranja),var(--rosa));color:#fff;
+  box-shadow:0 4px 14px rgba(255,107,53,.35)}
+.btn-enter.vis{opacity:1;pointer-events:all;animation:popIn .3s ease}
+.btn-enter:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,107,53,.4)}
+
+/* APP */
+#app{display:none}
+.top-bar{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:.8rem 1.5rem;
+  display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.role-badge{display:flex;align-items:center;gap:.5rem;padding:.4rem .9rem;
+  border-radius:50px;font-weight:800;font-size:.85rem}
+.role-badge.admin{background:#eff6ff;color:var(--azul)} .role-badge.padre{background:#fff0f6;color:var(--rosa)}
+.btn-cambiar{background:none;border:2px solid #e5e7eb;border-radius:50px;padding:.35rem .9rem;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;color:var(--muted);transition:all .2s}
+.btn-cambiar:hover{border-color:var(--muted);color:var(--text)}
+.btn-excel-top{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+  background:linear-gradient(135deg,#3B82F6,#6366F1);color:#fff;border:none;border-radius:10px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;
+  margin-left:auto;transition:all .2s}
+.btn-excel-top:hover{opacity:.88;transform:translateY(-1px)}
+
+nav{display:flex;flex-wrap:wrap;gap:.5rem;padding:1rem 1.5rem;background:#f8f9fa;
+  border-bottom:2px solid #e5e7eb;justify-content:center}
+nav button{display:flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border:2.5px solid transparent;
+  border-radius:50px;background:#fff;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:800;
+  cursor:pointer;transition:all .2s;color:var(--text)}
+nav button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+nav button.active{color:#fff;transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+nav button[data-tab="planeacion"].active{background:var(--azul)}
+nav button[data-tab="materiales"].active{background:var(--verde)}
+nav button[data-tab="inventario"].active{background:var(--morado)}
+nav button[data-tab="registro"].active{background:var(--rosa)}
+
+main{max-width:860px;margin:0 auto;padding:2rem 1.5rem 5rem}
+.tab-panel{display:none;animation:fadeIn .3s ease} .tab-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* SECTION HEADER */
+.sec-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;
+  padding:1.2rem 1.5rem;border-radius:16px;color:#fff}
+.sec-header .ico{font-size:2.2rem} .sec-header h2{font-family:'Fredoka One',cursive;font-size:1.6rem}
+.sec-header p{font-size:.88rem;opacity:.92;font-weight:600}
+.bg-azul{background:linear-gradient(135deg,#3B82F6,#6366F1)}
+.bg-verde{background:linear-gradient(135deg,#22C55E,#16A34A)}
+.bg-morado{background:linear-gradient(135deg,#A855F7,#7C3AED)}
+.bg-rosa{background:linear-gradient(135deg,#FF6B9D,#EC4899)}
+
+/* CARDS */
+.card{background:#fff;border-radius:16px;padding:1.5rem;margin-bottom:1.2rem;
+  box-shadow:0 2px 12px rgba(0,0,0,.07);border:2px solid #f3f4f6}
+.card h3{font-family:'Fredoka One',cursive;font-size:1.1rem;margin-bottom:1rem;color:var(--text)}
+label{display:block;font-weight:700;font-size:.82rem;margin-bottom:.3rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.04em}
+input[type=text],input[type=date],input[type=number],textarea,select{
+  width:100%;padding:.6rem .9rem;border:2px solid #e5e7eb;border-radius:10px;
+  font-family:'Nunito',sans-serif;font-size:1rem;color:var(--text);background:#fafafa;
+  transition:border-color .2s;margin-bottom:.9rem}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--azul);background:#fff}
+textarea{resize:vertical;min-height:75px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}}
+
+/* ROWS */
+.row-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.8rem}
+.row-item{display:flex;align-items:center;gap:.5rem}
+.row-item input{margin-bottom:0;flex:1}
+.row-item input[type=number]{width:80px;flex:none}
+.row-item select{margin-bottom:0}
+.del-btn{background:#fee2e2;border:none;color:#ef4444;border-radius:8px;padding:.35rem .6rem;
+  cursor:pointer;font-size:1rem;font-weight:900;flex-shrink:0}
+.del-btn:hover{background:#fecaca}
+.add-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;
+  background:#f0fdf4;color:#16a34a;border:2px dashed #86efac;border-radius:10px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;transition:all .2s}
+.add-btn:hover{background:#dcfce7}
+
+/* SEMÁFORO */
+.semaforo{display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap}
+.sem-btn{flex:1;min-width:80px;padding:.5rem;border:2px solid transparent;border-radius:10px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;text-align:center}
+.sem-btn.rojo{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+.sem-btn.amarillo{background:#fef9c3;color:#ca8a04;border-color:#fde68a}
+.sem-btn.verde{background:#dcfce7;color:#16a34a;border-color:#86efac}
+.sem-btn.active.rojo{background:#dc2626;color:#fff}
+.sem-btn.active.amarillo{background:#ca8a04;color:#fff}
+.sem-btn.active.verde{background:#16a34a;color:#fff}
+
+/* CARITAS */
+.carita-group{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:.8rem}
+.carita-opt{display:none}
+.carita-opt+label{display:flex;flex-direction:column;align-items:center;gap:.2rem;
+  padding:.55rem .8rem;border:2.5px solid #e5e7eb;border-radius:14px;cursor:pointer;
+  font-size:.78rem;font-weight:700;color:var(--muted);transition:all .2s;background:#fafafa}
+.carita-opt+label .em{font-size:1.9rem}
+.carita-opt:checked+label{border-color:var(--rosa);background:#fff0f6;color:var(--rosa);transform:scale(1.07)}
+
+/* PADRE HERO */
+.padre-hero{background:linear-gradient(135deg,#FF6B9D,#A855F7);border-radius:20px;
+  padding:2rem;margin-bottom:1.5rem;color:#fff;text-align:center}
+.padre-hero h2{font-family:'Fredoka One',cursive;font-size:1.8rem;margin-bottom:.4rem}
+.padre-hero p{font-size:.95rem;font-weight:600;opacity:.93}
+
+/* BOTTOM BAR */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #e5e7eb;
+  padding:.8rem 1.5rem;display:flex;justify-content:flex-end;gap:.8rem;z-index:200}
+.btn-limpiar{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.1rem;
+  background:#f3f4f6;color:var(--muted);border:2px solid #e5e7eb;border-radius:12px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;transition:all .2s}
+.btn-limpiar:hover{background:#e5e7eb}
+.btn-guardar{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.4rem;
+  background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;border-radius:12px;
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:.95rem;cursor:pointer;
+  box-shadow:0 4px 14px rgba(34,197,94,.35);transition:all .2s}
+.btn-guardar:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(34,197,94,.4)}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1a1a2e;color:#fff;padding:.7rem 1.5rem;border-radius:50px;
+  font-weight:800;font-size:.9rem;opacity:0;transition:all .35s;pointer-events:none;
+  z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media print{
+  .bottom-bar,.top-bar,nav,.btn-limpiar,.btn-guardar,.btn-excel-top,.add-btn,.del-btn,#role-screen{display:none!important}
+  main{padding:0;max-width:100%} .tab-panel{display:block!important}
+  .card{box-shadow:none;border-color:#ccc;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="er">🦋 🎨 ⭐ 🎭 🌈</div>
+  <h1>Pequeñas Estrellas</h1>
+  <p>Kit de Organización · Colibrí Arte Infantil en Movimiento A.C.</p>
+</header>
+
+<!-- SELECCIÓN DE ROL -->
+<div id="role-screen">
+  <h2>¿Quién está llenando el formulario?</h2>
+  <p>Selecciona tu perfil para ver las opciones correspondientes</p>
+  <div class="role-cards">
+    <div class="role-card admin" onclick="selectRole('admin',this)">
+      <div class="ico">🏫</div>
+      <h3>Administrativo</h3>
+      <p>Planeación de talleres, materiales e inventario</p>
+    </div>
+    <div class="role-card padre" onclick="selectRole('padre',this)">
+      <div class="ico">👨‍👧</div>
+      <h3>Padre / Madre de familia</h3>
+      <p>Registro de asistencia y evaluación del taller</p>
+    </div>
+  </div>
+  <button class="btn-enter" id="btn-enter" onclick="enterApp()">Entrar →</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="top-bar">
+    <div class="role-badge" id="role-badge">👤</div>
+    <button class="btn-cambiar" onclick="goBack()">← Cambiar perfil</button>
+    <button class="btn-excel-top" onclick="exportExcel()">📥 Descargar Base de Datos (.xlsx)</button>
+  </div>
+  <nav id="main-nav"></nav>
+  <main id="main-content"></main>
+</div>
+
+<div class="bottom-bar" id="bottom-bar" style="display:none">
+  <button class="btn-limpiar" onclick="clearTab()">🗑 Limpiar</button>
+  <button class="btn-guardar" onclick="saveRecord()">💾 Guardar registro</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────
+// DB (persiste en localStorage)
+// ─────────────────────────────────────────
+let db = { planeacion:[], materiales:[], inventario:[], registros:[] };
+try{ const s=localStorage.getItem('colibri_db'); if(s) db=JSON.parse(s); }catch(e){}
+function saveDb(){ try{ localStorage.setItem('colibri_db',JSON.stringify(db)); }catch(e){} }
+
+let currentRole=null;
+
+// ─────────────────────────────────────────
+// ROL
+// ─────────────────────────────────────────
+function selectRole(role,el){
+  currentRole=role;
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn-enter').classList.add('vis');
+}
+function enterApp(){
+  if(!currentRole) return;
+  document.getElementById('role-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('bottom-bar').style.display='flex';
+  buildApp();
+}
+function goBack(){
+  document.getElementById('role-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('bottom-bar').style.display='none';
+  currentRole=null;
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('btn-enter').classList.remove('vis');
+}
+
+// ─────────────────────────────────────────
+// CONSTRUIR VISTAS POR ROL
+// ─────────────────────────────────────────
+function buildApp(){
+  const badge=document.getElementById('role-badge');
+  const nav=document.getElementById('main-nav');
+  const content=document.getElementById('main-content');
+  nav.innerHTML=''; content.innerHTML='';
+
+  if(currentRole==='admin'){
+    badge.className='role-badge admin'; badge.textContent='🏫 Administrativo';
+    [['planeacion','📋 Planeación'],['materiales','🎨 Materiales'],['inventario','📦 Inventario']].forEach(([id,label],i)=>{
+      const btn=document.createElement('button');
+      btn.dataset.tab=id; btn.textContent=label;
+      if(i===0) btn.classList.add('active');
+      btn.onclick=()=>switchTab(id);
+      nav.appendChild(btn);
+    });
+    content.innerHTML=htmlPlaneacion()+htmlMateriales()+htmlInventario();
+  } else {
+    badge.className='role-badge padre'; badge.textContent='👨‍👧 Padre / Madre de familia';
+    const btn=document.createElement('button');
+    btn.dataset.tab='registro'; btn.textContent='📝 Registro y Evaluación';
+    btn.classList.add('active'); btn.onclick=()=>switchTab('registro');
+    nav.appendChild(btn);
+    content.innerHTML=htmlRegistro();
+    const df=document.getElementById('reg-fecha'); if(df) df.valueAsDate=new Date();
+  }
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  const p=document.getElementById('tab-'+id); if(p) p.classList.add('active');
+  const b=document.querySelector(`nav button[data-tab="${id}"]`); if(b) b.classList.add('active');
+}
+
+// ─────────────────────────────────────────
+// HTML TEMPLATES
+// ─────────────────────────────────────────
+function htmlPlaneacion(){ return `
+<div class="tab-panel active" id="tab-planeacion">
+  <div class="sec-header bg-azul"><div class="ico">📋</div><div><h2>Planeación de Taller</h2><p>Diseña cada sesión con todos los detalles</p></div></div>
+  <div class="card"><h3>📌 Información General</h3>
+    <div class="grid2">
+      <div><label>Nombre del taller</label><input type="text" id="pl-nombre" placeholder="Ej. Pintura de emociones"></div>
+      <div><label>Fecha</label><input type="date" id="pl-fecha"></div>
+      <div><label>Tallerista / Responsable</label><input type="text" id="pl-tallerista" placeholder="Nombre completo"></div>
+      <div><label>Espacio / Lugar</label><input type="text" id="pl-lugar" placeholder="Ej. Salón principal"></div>
+      <div><label>Hora de inicio</label><input type="text" id="pl-hora" placeholder="10:00 am"></div>
+      <div><label>Duración estimada</label><input type="text" id="pl-duracion" placeholder="Ej. 60 minutos"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Rango de edad</label>
+        <select id="pl-edad"><option>4-5 años (Primera infancia)</option><option>5-11 años (Infancia)</option><option>4-11 años (Mixto)</option></select>
+      </div>
+      <div><label>Número esperado de niños</label><input type="number" id="pl-ninos" placeholder="15" min="1"></div>
+    </div>
+  </div>
+  <div class="card"><h3>🎯 Objetivo del taller</h3>
+    <textarea id="pl-objetivo" placeholder="Ej. Que los niños identifiquen y expresen sus emociones a través de la pintura..."></textarea>
+  </div>
+  <div class="card"><h3>🗂️ Tipo de actividad</h3>
+    <select id="pl-tipo">
+      <option>🎨 Artes visuales (dibujo / pintura)</option><option>🎵 Música y sonido</option>
+      <option>🕺 Expresión corporal / danza</option><option>🎭 Teatro y emociones</option>
+      <option>♻️ Creación con materiales reciclados</option><option>🌈 Actividad mixta / libre</option>
+    </select>
+  </div>
+  <div class="card"><h3>🪜 Pasos de la actividad</h3>
+    <div class="row-list" id="pasos-list">
+      <div class="row-item"><input type="text" placeholder="Paso 1: Bienvenida y calentamiento (10 min)"><button class="del-btn" onclick="delRow(this)">✕</button></div>
+      <div class="row-item"><input type="text" placeholder="Paso 2: Desarrollo creativo (30 min)"><button class="del-btn" onclick="delRow(this)">✕</button></div>
+    </div>
+    <button class="add-btn" onclick="addRow('pasos-list','Paso nuevo...')">+ Agregar paso</button>
+  </div>
+  <div class="card"><h3>💡 Cierre y notas</h3>
+    <label>Reflexión / actividad de cierre</label>
+    <textarea id="pl-cierre" placeholder="Ej. Los niños comparten su obra y mencionan qué emoción quisieron expresar."></textarea>
+    <label>Notas adicionales</label>
+    <textarea id="pl-notas" placeholder="Adaptaciones, consideraciones especiales, etc."></textarea>
+  </div>
+</div>`; }
+
+function htmlMateriales(){ return `
+<div class="tab-panel" id="tab-materiales">
+  <div class="sec-header bg-verde"><div class="ico">🎨</div><div><h2>Lista de Materiales</h2><p>Registra los materiales necesarios para el taller</p></div></div>
+  <div class="card"><h3>📌 Datos del taller</h3>
+    <div class="grid2">
+      <div><label>Nombre del taller</label><input type="text" id="mat-nombre" placeholder="Ej. Pintura colectiva"></div>
+      <div><label>Fecha</label><input type="date" id="mat-fecha"></div>
+      <div><label>Número de niños</label><input type="number" id="mat-ninos" placeholder="15" min="1"></div>
+      <div><label>Responsable</label><input type="text" id="mat-resp" placeholder="Nombre del tallerista"></div>
+    </div>
+  </div>
+  <div class="card"><h3>📦 Materiales necesarios</h3>
+    <div class="row-list" id="mat-list">
+      <div class="row-item"><input type="text" placeholder="Material (ej. Cartulina blanca)"><input type="number" placeholder="Cant." min="0" style="width:70px"><select style="margin-bottom:0;width:120px"><option>✅ Disponible</option><option>❌ Falta</option><option>⚠️ Poco</option></select><button class="del-btn" onclick="delRow(this)">✕</button></div>
+      <div class="row-item"><input type="text" placeholder="Material (ej. Acuarelas)"><input type="number" placeholder="Cant." min="0" style="width:70px"><select style="margin-bottom:0;width:120px"><option>✅ Disponible</option><option>❌ Falta</option><option>⚠️ Poco</option></select><button class="del-btn" onclick="delRow(this)">✕</button></div>
+    </div>
+    <button class="add-btn" onclick="addMatRow('mat-list',false)">+ Agregar material</button>
+  </div>
+  <div class="card"><h3>🤝 Gestión de faltantes</h3>
+    <div class="grid2">
+      <div><label>¿Quién conseguirá los faltantes?</label><input type="text" id="mat-gestor" placeholder="Nombre / aliado"></div>
+      <div><label>Fecha límite</label><input type="date" id="mat-limite"></div>
+    </div>
+    <label>Notas</label>
+    <textarea id="mat-notas" placeholder="Ej. Los materiales reciclados los donó la escuela primaria."></textarea>
+  </div>
+</div>`; }
+
+function htmlInventario(){ return `
+<div class="tab-panel" id="tab-inventario">
+  <div class="sec-header bg-morado"><div class="ico">📦</div><div><h2>Inventario de Materiales</h2><p>Control general de materiales artísticos disponibles</p></div></div>
+  <div class="card"><h3>📅 Actualización</h3>
+    <div class="grid2">
+      <div><label>Fecha</label><input type="date" id="inv-fecha"></div>
+      <div><label>Responsable</label><input type="text" id="inv-resp" placeholder="Nombre"></div>
+    </div>
+  </div>
+  <div class="card"><h3>🎨 Materiales en existencia</h3>
+    <div class="row-list" id="inv-list">
+      <div class="row-item"><input type="text" placeholder="Material (ej. Pinceles)"><input type="number" placeholder="Cant." min="0" style="width:70px"><select style="margin-bottom:0;width:140px"><option>✅ Buen estado</option><option>⚠️ Regular</option><option>❌ Reponer</option></select><button class="del-btn" onclick="delRow(this)">✕</button></div>
+      <div class="row-item"><input type="text" placeholder="Material (ej. Témperas)"><input type="number" placeholder="Cant." min="0" style="width:70px"><select style="margin-bottom:0;width:140px"><option>✅ Buen estado</option><option>⚠️ Regular</option><option>❌ Reponer</option></select><button class="del-btn" onclick="delRow(this)">✕</button></div>
+    </div>
+    <button class="add-btn" onclick="addMatRow('inv-list',true)">+ Agregar material</button>
+  </div>
+  <div class="card"><h3>🚨 Materiales urgentes</h3>
+    <textarea id="inv-urgentes" placeholder="Lista de materiales que necesitan reposición urgente..."></textarea>
+    <label>Responsable de reposición</label>
+    <input type="text" id="inv-resprepos" placeholder="Nombre / aliado">
+  </div>
+  <div class="card"><h3>💡 Semáforo general</h3>
+    <div class="semaforo" id="sem-inv">
+      <button class="sem-btn rojo" onclick="setSem('sem-inv',this)">🔴 Crítico</button>
+      <button class="sem-btn amarillo" onclick="setSem('sem-inv',this)">🟡 Regular</button>
+      <button class="sem-btn verde" onclick="setSem('sem-inv',this)">🟢 Bien</button>
+    </div>
+  </div>
+</div>`; }
+
+function htmlRegistro(){ return `
+<div class="tab-panel active" id="tab-registro">
+  <div class="padre-hero"><div style="font-size:2.5rem;margin-bottom:.5rem">🧒⭐</div>
+    <h2>Registro y Evaluación del Taller</h2>
+    <p>Llena este formulario al terminar el taller · ¡Gracias por participar!</p>
+  </div>
+
+  <div class="card"><h3>📅 Información del evento</h3>
+    <div class="grid2">
+      <div><label>Nombre del taller al que asistió</label><input type="text" id="reg-taller" placeholder="Ej. Pintura de emociones"></div>
+      <div><label>Fecha del evento</label><input type="date" id="reg-fecha"></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>🧒 Datos del niño / niña</h3>
+    <div class="grid2">
+      <div><label>Nombre completo del niño/a</label><input type="text" id="reg-nombre" placeholder="Nombre y apellido"></div>
+      <div>
+        <label>Edad (número entero entre 4 y 11 años)</label>
+        <input type="number" id="reg-edad" placeholder="Ej. 7" min="4" max="11" step="1"
+          oninput="let v=parseInt(this.value.replace(/[^0-9]/g,''));this.value=isNaN(v)?'':(v>11?11:(v<1?'':v))">
+      </div>
+    </div>
+    <div class="grid2">
+      <div><label>Nombre del padre / madre / tutor</label><input type="text" id="reg-tutor" placeholder="Nombre completo"></div>
+      <div><label>Teléfono de contacto (opcional)</label><input type="text" id="reg-tel" placeholder="10 dígitos"></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>😶 Antes del taller — ¿Cómo llegó tu hijo/a?</h3>
+    <p style="font-size:.83rem;color:var(--muted);font-weight:600;margin-bottom:1rem">Selecciona la emoción que mejor lo describe</p>
+    <div class="carita-group">
+      <input type="radio" name="antes" id="a1" class="carita-opt" value="Feliz"><label for="a1"><span class="em">😄</span>Feliz</label>
+      <input type="radio" name="antes" id="a2" class="carita-opt" value="Tranquilo/a"><label for="a2"><span class="em">😐</span>Tranquilo/a</label>
+      <input type="radio" name="antes" id="a3" class="carita-opt" value="Nervioso/a"><label for="a3"><span class="em">😰</span>Nervioso/a</label>
+      <input type="radio" name="antes" id="a4" class="carita-opt" value="Triste"><label for="a4"><span class="em">😔</span>Triste</label>
+      <input type="radio" name="antes" id="a5" class="carita-opt" value="Inquieto/a"><label for="a5"><span class="em">😤</span>Inquieto/a</label>
+    </div>
+  </div>
+
+  <div class="card"><h3>😊 Después del taller — ¿Cómo salió tu hijo/a?</h3>
+    <p style="font-size:.83rem;color:var(--muted);font-weight:600;margin-bottom:1rem">Selecciona la emoción que mejor lo describe</p>
+    <div class="carita-group">
+      <input type="radio" name="despues" id="d1" class="carita-opt" value="Feliz"><label for="d1"><span class="em">😄</span>Feliz</label>
+      <input type="radio" name="despues" id="d2" class="carita-opt" value="Tranquilo/a"><label for="d2"><span class="em">😌</span>Tranquilo/a</label>
+      <input type="radio" name="despues" id="d3" class="carita-opt" value="Emocionado/a"><label for="d3"><span class="em">🤩</span>Emocionado/a</label>
+      <input type="radio" name="despues" id="d4" class="carita-opt" value="Orgulloso/a"><label for="d4"><span class="em">😊</span>Orgulloso/a</label>
+      <input type="radio" name="despues" id="d5" class="carita-opt" value="Cansado/a"><label for="d5"><span class="em">😴</span>Cansado/a</label>
+    </div>
+  </div>
+
+  <div class="card"><h3>⭐ ¿Qué disfrutó más tu hijo/a?</h3>
+    <textarea id="reg-disfruto" placeholder="Ej. Le encantó pintar con los dedos y compartir con sus amigos."></textarea>
+    <label>¿Qué aprendió o expresó durante el taller?</label>
+    <textarea id="reg-aprendio" placeholder="Ej. Dijo que el color rojo lo hace sentir valiente."></textarea>
+  </div>
+
+  <div class="card"><h3>🌈 Nivel de participación de tu hijo/a</h3>
+    <div class="semaforo" id="sem-part">
+      <button class="sem-btn rojo" onclick="setSem('sem-part',this)">🔴 Poca participación</button>
+      <button class="sem-btn amarillo" onclick="setSem('sem-part',this)">🟡 Participación regular</button>
+      <button class="sem-btn verde" onclick="setSem('sem-part',this)">🟢 Muy participativo/a</button>
+    </div>
+  </div>
+
+  <div class="card"><h3>🔄 ¿Le gustaría volver a un taller?</h3>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--text)">
+        <input type="radio" name="volver" id="v1" style="accent-color:var(--verde);width:18px;height:18px;margin-bottom:0"> ✅ Sí, definitivamente
+      </label>
+      <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--text)">
+        <input type="radio" name="volver" id="v2" style="accent-color:var(--amarillo);width:18px;height:18px;margin-bottom:0"> ⚠️ Tal vez
+      </label>
+      <label style="display:flex;align-items:center;gap:.4rem;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--text)">
+        <input type="radio" name="volver" id="v3" style="accent-color:var(--naranja);width:18px;height:18px;margin-bottom:0"> ❌ No por ahora
+      </label>
+    </div>
+  </div>
+
+  <div class="card"><h3>💬 Comentarios adicionales (opcional)</h3>
+    <textarea id="reg-comentarios" placeholder="Sugerencias, observaciones o agradecimientos..."></textarea>
+  </div>
+</div>`; }
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+function addRow(listId, placeholder){
+  const list=document.getElementById(listId); if(!list) return;
+  const d=document.createElement('div'); d.className='row-item';
+  d.innerHTML=`<input type="text" placeholder="${placeholder}"><button class="del-btn" onclick="delRow(this)">✕</button>`;
+  list.appendChild(d);
+}
+function delRow(btn){ btn.closest('.row-item').remove(); }
+function addMatRow(listId, isInv){
+  const opts=isInv
+    ?'<option>✅ Buen estado</option><option>⚠️ Regular</option><option>❌ Reponer</option>'
+    :'<option>✅ Disponible</option><option>❌ Falta</option><option>⚠️ Poco</option>';
+  const w=isInv?'140':'120';
+  const list=document.getElementById(listId); if(!list) return;
+  const d=document.createElement('div'); d.className='row-item';
+  d.innerHTML=`<input type="text" placeholder="Material"><input type="number" placeholder="Cant." min="0" style="width:70px"><select style="margin-bottom:0;width:${w}px">${opts}</select><button class="del-btn" onclick="delRow(this)">✕</button>`;
+  list.appendChild(d);
+}
+function setSem(gid, btn){
+  document.querySelectorAll(`#${gid} .sem-btn`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+
+// ─────────────────────────────────────────
+// GUARDAR
+// ─────────────────────────────────────────
+function saveRecord(){
+  if(currentRole==='admin'){
+    const active=document.querySelector('.tab-panel.active');
+    if(!active) return;
+    const id=active.id.replace('tab-','');
+    if(id==='planeacion') savePlaneacion();
+    else if(id==='materiales') saveMateriales();
+    else if(id==='inventario') saveInventario();
+  } else { saveRegistro(); }
+}
+
+function savePlaneacion(){
+  if(!v('pl-nombre')){ toast('⚠️ Escribe el nombre del taller'); return; }
+  const pasos=[...document.querySelectorAll('#pasos-list .row-item input')].map(i=>i.value.trim()).filter(Boolean).join(' | ');
+  db.planeacion.push({
+    fecha_registro:new Date().toLocaleDateString('es-MX'),
+    nombre_taller:v('pl-nombre'), fecha_taller:v('pl-fecha'), tallerista:v('pl-tallerista'),
+    lugar:v('pl-lugar'), hora:v('pl-hora'), duracion:v('pl-duracion'),
+    rango_edad:document.getElementById('pl-edad')?.value||'',
+    num_ninos_esperados:v('pl-ninos'),
+    objetivo:v('pl-objetivo'), tipo_actividad:document.getElementById('pl-tipo')?.value||'',
+    pasos, cierre:v('pl-cierre'), notas:v('pl-notas'),
+  });
+  saveDb(); toast('✅ Planeación guardada'); clearTab();
+}
+
+function saveMateriales(){
+  if(!v('mat-nombre')){ toast('⚠️ Escribe el nombre del taller'); return; }
+  const items=[...document.querySelectorAll('#mat-list .row-item')].map(r=>{
+    const inp=r.querySelectorAll('input'); const sel=r.querySelector('select');
+    return `${inp[0]?.value||''} (${inp[1]?.value||'?'} uds) [${sel?.value||''}]`;
+  }).filter(s=>!s.startsWith(' (')).join(' | ');
+  db.materiales.push({
+    fecha_registro:new Date().toLocaleDateString('es-MX'),
+    nombre_taller:v('mat-nombre'), fecha_taller:v('mat-fecha'),
+    num_ninos:v('mat-ninos'), responsable:v('mat-resp'), materiales:items,
+    gestor_faltantes:v('mat-gestor'), fecha_limite:v('mat-limite'), notas:v('mat-notas'),
+  });
+  saveDb(); toast('✅ Lista de materiales guardada'); clearTab();
+}
+
+function saveInventario(){
+  const items=[...document.querySelectorAll('#inv-list .row-item')].map(r=>{
+    const inp=r.querySelectorAll('input'); const sel=r.querySelector('select');
+    return `${inp[0]?.value||''} (${inp[1]?.value||'?'} uds) [${sel?.value||''}]`;
+  }).filter(s=>!s.startsWith(' (')).join(' | ');
+  const sem=document.querySelector('#sem-inv .sem-btn.active');
+  db.inventario.push({
+    fecha_registro:new Date().toLocaleDateString('es-MX'),
+    fecha_actualizacion:v('inv-fecha'), responsable:v('inv-resp'), materiales:items,
+    materiales_urgentes:v('inv-urgentes'), responsable_reposicion:v('inv-resprepos'),
+    semaforo_general:sem?sem.textContent.trim():'',
+  });
+  saveDb(); toast('✅ Inventario guardado'); clearTab();
+}
+
+function saveRegistro(){
+  const edadRaw=v('reg-edad');
+  const edad=parseInt(edadRaw);
+  if(!edadRaw||isNaN(edad)||edad<4||edad>11){ toast('⚠️ La edad debe ser un número entero entre 4 y 11'); return; }
+  if(!v('reg-nombre')){ toast('⚠️ Escribe el nombre del niño/a'); return; }
+  if(!v('reg-taller')){ toast('⚠️ Escribe el nombre del taller'); return; }
+
+  const antesEl=document.querySelector('input[name="antes"]:checked');
+  const despEl=document.querySelector('input[name="despues"]:checked');
+  const volverEl=document.querySelector('input[name="volver"]:checked');
+  const semPart=document.querySelector('#sem-part .sem-btn.active');
+
+  db.registros.push({
+    fecha_registro:new Date().toLocaleDateString('es-MX'),
+    nombre_taller:v('reg-taller'), fecha_evento:v('reg-fecha'),
+    nombre_nino:v('reg-nombre'), edad_nino:edad,
+    nombre_tutor:v('reg-tutor'), telefono_tutor:v('reg-tel'),
+    emocion_antes_taller:antesEl?antesEl.value:'',
+    emocion_despues_taller:despEl?despEl.value:'',
+    que_disfruto:v('reg-disfruto'), que_aprendio:v('reg-aprendio'),
+    nivel_participacion:semPart?semPart.textContent.trim():'',
+    quisiera_volver:volverEl?volverEl.parentElement.textContent.trim():'',
+    comentarios_tutor:v('reg-comentarios'),
+  });
+  saveDb(); toast('✅ ¡Registro guardado! Gracias 🌟'); clearTab();
+}
+
+// ─────────────────────────────────────────
+// LIMPIAR
+// ─────────────────────────────────────────
+function clearTab(){
+  const active=document.querySelector('.tab-panel.active'); if(!active) return;
+  active.querySelectorAll('input[type=text],input[type=date],input[type=number],textarea').forEach(el=>el.value='');
+  active.querySelectorAll('input[type=radio]').forEach(el=>el.checked=false);
+  active.querySelectorAll('.sem-btn').forEach(b=>b.classList.remove('active'));
+  if(currentRole==='padre'){ const df=document.getElementById('reg-fecha'); if(df) df.valueAsDate=new Date(); }
+}
+
+// ─────────────────────────────────────────
+// EXPORTAR EXCEL
+// ─────────────────────────────────────────
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const sheets=[
+    {name:'Planeacion_Talleres',   data:db.planeacion},
+    {name:'Lista_Materiales',      data:db.materiales},
+    {name:'Inventario_Materiales', data:db.inventario},
+    {name:'Asistencia_Evaluacion', data:db.registros},
+  ];
+  sheets.forEach(s=>{
+    const ws=s.data.length===0
+      ?XLSX.utils.aoa_to_sheet([['Sin registros aún.']])
+      :XLSX.utils.json_to_sheet(s.data);
+    if(s.data.length>0){
+      ws['!cols']=Object.keys(s.data[0]).map(k=>({wch:Math.max(k.length+4,22)}));
+    }
+    XLSX.utils.book_append_sheet(wb,ws,s.name);
+  });
+  const fecha=new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb,`colibri_base_datos_${fecha}.xlsx`);
+  toast('📥 Base de datos descargada en Excel');
+}
+
+// ─────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
